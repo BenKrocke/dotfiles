@@ -1,0 +1,105 @@
+[user]
+	name = "Ben Krocké"
+	email = benkrocke@gmail.com
+
+[core]
+	editor = nvim -u NONE
+	pager = delta
+
+[init]
+	defaultBranch = main
+
+[branch]
+	sort = -committerdate
+
+[pull]
+	ff = only
+
+[push]
+	autoSetupRemote = true
+
+[merge]
+	conflictStyle = zdiff3
+
+[rerere]
+	enabled = true
+
+[interactive]
+	diffFilter = delta --color-only
+	singleKey = false
+
+[delta]
+	navigate = true
+
+[help]
+	autocorrect = prompt
+
+[filter "lfs"]
+	clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+
+[alias]
+	# Status & diff
+	s   = status -s                          # short status
+	d   = diff                               # unstaged changes
+	ds  = diff --staged                      # staged changes (vs HEAD)
+	da  = diff HEAD                          # all changes, staged + unstaged
+
+	# Staging
+	a   = add                                # stage a path
+	aa  = add --all                          # stage everything
+	ap  = add --patch                        # stage interactively, hunk by hunk
+	diff-file = "!f() { if git ls-files --error-unmatch \"$1\" >/dev/null 2>&1; then git diff --color=always -- \"$1\"; else git diff --no-index --color=always /dev/null \"$1\"; fi; }; f"   # preview a file's diff, tracked or untracked
+	af  = "!files=$(git ls-files --modified --others --exclude-standard | fzf --multi --prompt='  add: ' --height=40% --layout=reverse --border=rounded --info=inline --preview='git diff-file {}' --preview-window='right:60%:wrap'); [ -z \"$files\" ] && exit 0; echo \"$files\" | xargs -r git add && echo \"$files\" | xargs -r git diff --staged --"   # fuzzy-pick files to stage, then show the staged diff
+	uf  = "!git diff --staged --name-only | fzf --multi --prompt='  unstage: ' --height=40% --layout=reverse --border=rounded --info=inline --preview='git diff --staged --color=always -- {}' --preview-window='right:60%:wrap' | xargs -r git restore --staged"   # fuzzy-pick files to unstage
+	ua  = restore --staged .
+
+	# Commit
+	c   = commit                             # commit (opens editor)
+	cm  = commit -m                          # commit with inline message
+	ca  = commit --amend                     # amend last commit, edit message
+	can = commit --amend --no-edit           # amend last commit, keep message
+	cf  = commit --fixup                     # fixup commit (auto-squashed on rebase)
+	cs  = commit --squash                    # squash commit (folded in on rebase)
+	rename-last = commit --amend -m
+	undo-last = reset --soft HEAD~1
+
+	# Branch & switch
+	b  = branch                              # list / manage branches
+	sw = switch                              # switch to a branch
+	sc = switch -c                           # create and switch to a new branch
+	s- = switch -                            # switch to previous branch
+	m  = !git switch main || git switch master   # jump to main (or master)
+	bf = "!f() { branch=$(git branch --format='%(refname:short)' | fzf --prompt='  branch: ' --height=40% --layout=reverse --border=rounded --info=inline --preview='git log --oneline --color=always --max-count=10 {}' --preview-window='right:50%:wrap'); [ -z \"$branch\" ] && return; if git show-ref --verify --quiet refs/heads/\"$branch\"; then git switch \"$branch\"; else git switch -c \"$branch\" --track origin/\"$branch\" 2>/dev/null || git switch -c \"$branch\"; fi; }; f"   # fuzzy-pick a branch to switch to
+
+	# Log
+	l     = log                              # full log
+	lg    = log --oneline --graph --decorate --all   # compact graph of all branches
+	lol   = log --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit   # pretty coloured graph
+	last  = log -1 HEAD --stat               # last commit with file stats
+	today = log --since='midnight' --author='Ben Krocké' --oneline   # your commits since midnight
+
+	# Sync
+	f  = fetch                               # fetch default remote
+	fp = fetch --prune                       # fetch, drop deleted remote branches
+	pl = pull                                # pull current branch
+	ps = push                                # push current branch
+
+	# Rebase
+	rb  = rebase                             # rebase
+	rbi = rebase -i                          # interactive rebase
+	rbc = rebase --continue                  # resume after resolving conflicts
+	rba = rebase --abort                     # cancel rebase, restore original
+	rbm = rebase origin/main                 # rebase current branch onto origin/main
+	rbs = rebase -i --autosquash             # interactive rebase, auto-ordering fixup/squash
+
+	# Branch cleanup — each "list-*" previews what the matching "clean-*" deletes
+	list-merged    = "!git branch --merged | grep -vE '^\\*|main|master|develop'"   # branches merged into current
+	list-stale     = !git for-each-ref --format='%(refname:short) %(upstream:track)' refs/heads/ | awk '$2 == \"[gone]\" { print $1 }'   # branches whose remote was deleted
+	list-unpushed  = "!git branch -vv | grep -v '\\[origin/' | awk '{print $1}' | grep -vE '^\\*|main|master|develop'"   # branches never pushed anywhere
+	clean-merged   = !git fetch --prune && git list-merged | xargs -r git branch -d     # delete merged branches (safe, -d)
+	clean-stale    = !git list-stale | xargs -r git branch -D                           # delete stale-remote branches (-D)
+	clean-unpushed = !git fetch --prune && git list-unpushed | xargs -r git branch -D   # delete never-pushed branches (-D, destructive!)
+	rs = "!git diff --name-only | fzf --multi --prompt='  discard: ' --height=40% --layout=reverse --border=rounded --info=inline --preview='git diff --color=always {}' --preview-window='right:60%:wrap' | xargs git restore"   # fuzzy-pick changed files to discard

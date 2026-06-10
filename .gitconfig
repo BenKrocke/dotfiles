@@ -71,7 +71,7 @@
 	sw = switch                              # switch to a branch
 	sc = switch -c                           # create and switch to a new branch
 	s- = switch -                            # switch to previous branch
-	m  = !git switch main || git switch master   # jump to main (or master)
+	sm  = !git switch main || git switch master   # jump to main (or master)
 	bf = "!f() { branch=$(git branch --format='%(refname:short)' | fzf --prompt='  branch: ' --height=40% --layout=reverse --border=rounded --info=inline --preview='git log --oneline --color=always --max-count=10 {}' --preview-window='right:50%:wrap'); [ -z \"$branch\" ] && return; if git show-ref --verify --quiet refs/heads/\"$branch\"; then git switch \"$branch\"; else git switch -c \"$branch\" --track origin/\"$branch\" 2>/dev/null || git switch -c \"$branch\"; fi; }; f"   # fuzzy-pick a branch to switch to
 
 	# Log
@@ -103,3 +103,6 @@
 	clean-stale    = !git list-stale | xargs -r git branch -D                           # delete stale-remote branches (-D)
 	clean-unpushed = !git fetch --prune && git list-unpushed | xargs -r git branch -D   # delete never-pushed branches (-D, destructive!)
 	rs = "!git diff --name-only | fzf --multi --prompt='  discard: ' --height=40% --layout=reverse --border=rounded --info=inline --preview='git diff --color=always {}' --preview-window='right:60%:wrap' | xargs git restore"   # fuzzy-pick changed files to discard
+
+  aliases = "!git config --get-regexp '^alias\\.' | sed 's/^alias\\.//' | sort | awk '{name=$1; $1=\"\"; def=substr($0,2); if(length(def)>72){def=substr(def,1,69) \"...\"}; printf \"  \\033[36m%-14s\\033[0m %s\\n\", name, def}'"
+

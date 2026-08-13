@@ -1,8 +1,16 @@
 # Dotfiles
 
-function Toggle-Host {
-    & "$HOME\Scripts\ToggleHost.ps1"
+function Toggle-Hosts {
+  & "$HOME\Scripts\ToggleHost.ps1"
 }
+
+Set-Alias -Name thf -Value Toggle-Hosts
+
+function Open-Hosts {
+  nvim "C:\Windows\System32\drivers\etc\hosts"
+}
+
+Set-Alias -Name ohf -Value Open-Hosts
 
 function Edit-UserSecrets {
     [CmdletBinding()]
@@ -53,4 +61,9 @@ if (Get-Command Register-ArgumentCompleter -ErrorAction SilentlyContinue) {
             $null
         ).CompletionMatches
     }
+}
+
+$emacsBin = "$env:USERPROFILE\.config\emacs\bin"
+if ($emacsBin -notin $env:PATH.Split(';')) {
+    $env:PATH = "$emacsBin;$env:PATH"
 }
